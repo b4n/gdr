@@ -1,0 +1,17 @@
+<glade-catalog name="gdr" library="gladepython" depends="gtk+">
+  <init-function>glade_python_init</init-function>
+
+  <glade-widget-classes>
+    <glade-widget-class name="GdrComboStackSwicther" generic-name="combostackswitcher" title="Combo Stack Switcher" icon-name="widget-gtk-combo-box">
+      <properties>
+        <property id="stack" name="Stack">
+          <tooltip>The stack this switcher controls</tooltip>
+        </property>
+      </properties>
+    </glade-widget-class>
+  </glade-widget-classes>
+
+  <glade-widget-group name="gdb" title="GDR">
+    <glade-widget-class-ref name="GdrComboStackSwicther"/>
+  </glade-widget-group>
+</glade-catalog>
