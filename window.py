@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2020 Colomban Wendling <ban@herbesfolles.org>
+# Copyright 2020-2021 Colomban Wendling <ban@herbesfolles.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,12 +20,16 @@ import sys
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gst', '1.0')
 from gi.repository import GObject
+from gi.repository import GLib
+from gi.repository import Gio
 from gi.repository import Gtk
 from gi.repository import Gst
 Gst.init(sys.argv)
 
 from gdr.combostackswitcher import ComboStackSwitcher
 from gdr.player import Player
+
+from gdr.archive import archive_open
 
 from daisy import package
 from daisy import navigationcontrol
@@ -115,13 +119,52 @@ class Window(Gtk.ApplicationWindow):
 
 
 class Application(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id='org.gdr.Gdr',
+                         flags=Gio.ApplicationFlags.HANDLES_OPEN)
+
     def do_activate(self):
-        win = Window(application=self)
+        for win in self.get_windows():
+            if not win._package:
+                break
+        else:
+            win = Window(application=self)
         win.present()
-        # FIXME: hardcoded test path
-        win.set_package(package.Package('samples/speechgen.opf'))
+
+    def do_open(self, files, n_files, hint=None):
+        for f in files:
+            file_type = f.query_file_type(Gio.FileQueryInfoFlags.NONE, None)
+            if file_type != Gio.FileType.DIRECTORY:
+                try:
+                    f = archive_open(f.get_path())
+                except GLib.Error as ex:
+                    print('Failed top open archive: %s' % ex.message)
+                    continue
+                file_type = f.query_file_type(Gio.FileQueryInfoFlags.NONE, None)
+            if file_type != Gio.FileType.DIRECTORY:
+                print('Invalid input file %s: not a directory nor a valid '
+                      'archive file' % f.get_uri())
+                continue
+
+            opf = f.get_child('speechgen.opf')
+            if not opf.get_path():
+                print('Cannot find speechgen.opf in "%s".  If this is a '
+                      'remote file or an archive, make sure you have '
+                      'gvfs-fuse properly set up' % f.get_uri())
+                continue
+
+            pkg = package.Package(opf.get_path())
+
+            for win in self.get_windows():
+                if not win._package:
+                    break
+            else:
+                win = Window(application=self)
+
+            win.set_package(pkg)
+            win.present()
 
 
 if __name__ == '__main__':
     app = Application()
-    app.run()
+    app.run(sys.argv)
