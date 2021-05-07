@@ -29,7 +29,7 @@ Gst.init(sys.argv)
 from gdr.combostackswitcher import ComboStackSwitcher
 from gdr.player import Player
 
-from gdr.archive import archive_open
+from gdr.archive import archive_open, archive_close
 
 from daisy import package
 from daisy import navigationcontrol
@@ -133,6 +133,7 @@ class Application(Gtk.Application):
 
     def do_open(self, files, n_files, hint=None):
         for f in files:
+            is_archive = False
             file_type = f.query_file_type(Gio.FileQueryInfoFlags.NONE, None)
             if file_type != Gio.FileType.DIRECTORY:
                 try:
@@ -140,10 +141,13 @@ class Application(Gtk.Application):
                 except GLib.Error as ex:
                     print('Failed top open archive: %s' % ex.message)
                     continue
+                is_archive = True
                 file_type = f.query_file_type(Gio.FileQueryInfoFlags.NONE, None)
             if file_type != Gio.FileType.DIRECTORY:
                 print('Invalid input file %s: not a directory nor a valid '
                       'archive file' % f.get_uri())
+                if is_archive:
+                    archive_close(f)
                 continue
 
             opf = f.get_child('speechgen.opf')
@@ -151,6 +155,8 @@ class Application(Gtk.Application):
                 print('Cannot find speechgen.opf in "%s".  If this is a '
                       'remote file or an archive, make sure you have '
                       'gvfs-fuse properly set up' % f.get_uri())
+                if is_archive:
+                    archive_close(f)
                 continue
 
             pkg = package.Package(opf.get_path())
@@ -161,6 +167,7 @@ class Application(Gtk.Application):
             else:
                 win = Window(application=self)
 
+            win.connect('destroy', lambda w: archive_close(f))
             win.set_package(pkg)
             win.present()
 
