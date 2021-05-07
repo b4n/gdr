@@ -72,7 +72,7 @@ class Player(Gtk.Box):
     def set_clip(self, clip, basedir=None):
         path = os.path.abspath(os.path.join(basedir, clip.src))
 
-        self.uri = "file://" + path
+        self.uri = "file://" + GLib.uri_escape_string(path, '/', True)
         self._slider.set_range(clip.begin, clip.end)
         print("playing %s from %s to %s" % (path, clip.begin, clip.end))
         self._playbin.seek_simple(Gst.Format.TIME,
