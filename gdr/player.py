@@ -157,9 +157,12 @@ class Player(Gtk.Box):
         self._playpause.handler_unblock_by_func(self._on_playpause)
 
         if self._refresh_id == 0 and new == Gst.State.PLAYING:
-            self._refresh_id = GLib.timeout_add(100, self._refresh_ui)
+            self._refresh_id = GLib.timeout_add_seconds(1, self._refresh_ui)
+            delta = (self._slider.get_adjustment().get_upper() - self._slider.get_adjustment().get_value()) * 1000 + 5
+            self._refresh_id2 = GLib.timeout_add(delta, self._refresh_ui)
         elif self._refresh_id != 0 and Gst.State.PLAYING not in (new, pending):
             GLib.source_remove(self._refresh_id)
+            GLib.source_remove(self._refresh_id2)
             self._refresh_id = 0
 
     def __init__(self, **props):
