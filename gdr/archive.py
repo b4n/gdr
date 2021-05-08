@@ -118,7 +118,7 @@ if __name__ == '__main__':
     from sys import argv
 
     for arg in argv[1:]:
-        zf = archive_open(arg)
+        zf = archive_open(Gio.File.new_for_commandline_arg(arg).get_path())
         for child_info in zf.enumerate_children(Gio.FILE_ATTRIBUTE_STANDARD_NAME,
                                                 Gio.FileQueryInfoFlags.NONE,
                                                 None):
