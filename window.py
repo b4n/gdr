@@ -150,9 +150,17 @@ class Application(Gtk.Application):
                     archive_close(f)
                 continue
 
-            opf = f.get_child('speechgen.opf')
-            if not opf.get_path():
-                print('Cannot find speechgen.opf in "%s".  If this is a '
+            # Look for the OPF
+            for info in f.enumerate_children(Gio.FILE_ATTRIBUTE_STANDARD_NAME,
+                                             Gio.FileQueryInfoFlags.NONE,
+                                             None):
+                name = info.get_name()
+                if name.endswith('.opf'):
+                    opf = f.get_child(name)
+                    if opf.get_path():
+                        break
+            else:
+                print('Cannot find OPF in "%s".  If this is a '
                       'remote file or an archive, make sure you have '
                       'gvfs-fuse properly set up' % f.get_uri())
                 if is_archive:
