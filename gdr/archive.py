@@ -119,12 +119,13 @@ if __name__ == '__main__':
 
     for arg in argv[1:]:
         zf = archive_open(Gio.File.new_for_commandline_arg(arg).get_path())
+        print('Archive members:')
         for child_info in zf.enumerate_children(Gio.FILE_ATTRIBUTE_STANDARD_NAME,
                                                 Gio.FileQueryInfoFlags.NONE,
                                                 None):
             name = child_info.get_name()
-            print(name)
+            print('- Name:', name)
             child = zf.get_child(name)
-            print(child.get_uri())
-            print(child.get_path())
+            print('  URI:', child.get_uri())
+            print('  Local path:', child.get_path())
         archive_close(zf)
